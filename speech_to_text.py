@@ -1,52 +1,59 @@
 import speech_recognition as sr
 import pyttsx3
+from datetime import datetime
 
-# Initializing recognizer and text-to-speech engine
+# Initialize recognizer and text-to-speech engine
 recognizer = sr.Recognizer()
 engine = pyttsx3.init()
-# # List microphone devices
-# print("Available microphones:")
-# print(sr.Microphone.list_microphone_names())
 
 # Function to speak a given text
 def speak_text(text):
     engine.say(text)
     engine.runAndWait()
 
-try:
-    # Selecting a specific microphone if necessary
-    mic = sr.Microphone(device_index=1)  # Replace 0 with your microphone index
+# Function to process recognized text
+def process_command(command):
+    command = command.lower()
 
-    with mic as source:
-        # Adjust for ambient noise
-        print("Adjusting for ambient noise...")
-        recognizer.energy_threshold = 100  # Fine-tune threshold as needed
-        recognizer.adjust_for_ambient_noise(source, duration=2)
+    if "time" in command:
+        current_time = datetime.now().strftime("%H:%M:%S")
+        response = f"The current time is {current_time}."
+        print(response)
+        speak_text(response)
 
-        # Start listening
-        print("Listening... Say 'quit the Program' to end.")
-        while True:
-            audio = recognizer.listen(source, timeout=15, phrase_time_limit=10)
+    elif "quit" in command:
+        response = "Goodbye! Have a great day."
+        print(response)
+        speak_text(response)
+        exit()
 
-            # Save audio for debugging
-            with open("audio_debug.wav", "wb") as f:
-                f.write(audio.get_wav_data())
+    else:
+        response = "Sorry, I don't understand that command."
+        print(response)
+        speak_text(response)
+
+# Main program loop
+with sr.Microphone() as source:
+    print("Listening for commands...")
+    speak_text("I am ready to assist you. Please speak a command.")
+
+    while True:
+        try:
+            recognizer.adjust_for_ambient_noise(source, duration=1)
+            audio = recognizer.listen(source)
+            print("Recognizing...")
 
             # Convert speech to text
-            print("Recognizing...")
             text = recognizer.recognize_google(audio)
-            print(f"You said: {text}")  # Debugging output
-            if text.lower() == "quit the program":
-                print("Exiting...")
-                break
-            
-            # Respond using text-to-speech
-            response = f"You said: {text}. This is your AI assistant spaeaking"
-            speak_text(response)
+            print(f"You said: {text}")
 
-except sr.UnknownValueError:
-    print("Sorry, I could not understand the audio.")
-except sr.RequestError as e:
-    print(f"Request error: {e}")
-except Exception as e:
-    print(f"An error occurred: {e}")
+            # Process the recognized command
+            process_command(text)
+
+        except sr.UnknownValueError:
+            print("Sorry, I could not understand the audio.")
+            speak_text("Sorry, I could not understand that. Please try again.")
+
+        except sr.RequestError as e:
+            print(f"Request error from Google Speech Recognition: {e}")
+            speak_text("There was a request error. Please try again.")
