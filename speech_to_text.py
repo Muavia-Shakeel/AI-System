@@ -1,11 +1,17 @@
 import speech_recognition as sr
+import pyttsx3
 
-# Initializing recognizer
+# Initializing recognizer and text-to-speech engine
 recognizer = sr.Recognizer()
-
+engine = pyttsx3.init()
 # # List microphone devices
 # print("Available microphones:")
 # print(sr.Microphone.list_microphone_names())
+
+# Function to speak a given text
+def speak_text(text):
+    engine.say(text)
+    engine.runAndWait()
 
 try:
     # Selecting a specific microphone if necessary
@@ -18,7 +24,7 @@ try:
         recognizer.adjust_for_ambient_noise(source, duration=2)
 
         # Start listening
-        print("Listening... Say 'End the Program' to end.")
+        print("Listening... Say 'quit the Program' to end.")
         while True:
             audio = recognizer.listen(source, timeout=15, phrase_time_limit=10)
 
@@ -30,9 +36,13 @@ try:
             print("Recognizing...")
             text = recognizer.recognize_google(audio)
             print(f"You said: {text}")  # Debugging output
-            if text.lower() == "End the program":
+            if text.lower() == "quit the program":
                 print("Exiting...")
                 break
+            
+            # Respond using text-to-speech
+            response = f"You said: {text}. This is your AI assistant spaeaking"
+            speak_text(response)
 
 except sr.UnknownValueError:
     print("Sorry, I could not understand the audio.")
